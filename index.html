@@ -632,25 +632,77 @@ function election(candidates, seats, ballots, seed){
 
     const maxRemove = cont.length - (seats - elected.length);
 
-    let group = [];
-
     /*
-      Viktig: Det må testes videre selv om en mindre gruppe ikke kan
-      ekskluderes. Tre kandidater på 0,00 kan eksempelvis ekskluderes
-      samlet selv om én eller to av dem ikke kan ekskluderes alene.
+      Punkt 15.3.4:
+
+      Først undersøkes hvor mange kandidater som høyst kan ekskluderes
+      etter punkt 15.3.2.
+
+      Deretter undersøkes hvor mange av disse som kan ekskluderes i den
+      aktuelle runden etter punkt 15.3.1.
+
+      Kandidatene testes som sammenhengende grupper, fra lavest
+      stemmetall og oppover. Det må alltid stå igjen minst like mange
+      gjenstående kandidater som antall ledige plasser.
     */
+    let maximumUnder1532 = 0;
+
     for(let k = 1; k <= maxRemove; k++){
       const low = sorted.slice(0, k);
       const rest = sorted.slice(k);
 
-      const sumLow = low.reduce((sum, c) => sum + sc[c], 0);
-      const threshold = sumLow + surplus;
+      const lowTotal = low.reduce(
+        (sum, candidate) => sum + sc[candidate],
+        0
+      );
 
-      const ok =
+      /*
+        Den øverste kandidaten i lavgruppen kan maksimalt få gruppens
+        samlede stemmetall samt alt uoverført overskudd.
+
+        Punkt 15.3.2 bruker «kunne ... ha passert». Likhet betyr ikke
+        at kandidaten passerer en annen kandidat, og derfor brukes <=.
+      */
+      const maximumPossible = lowTotal + surplus;
+
+      const passes1532 =
         rest.length &&
-        rest.every(c => threshold < sc[c] - 1e-9);
+        rest.every(candidate =>
+          maximumPossible <= sc[candidate] + 1e-9
+        );
 
-      if(ok){
+      if(passes1532){
+        maximumUnder1532 = k;
+      }
+    }
+
+    /*
+      Punkt 15.3.1:
+
+      Gruppen kan bare ekskluderes dersom gruppens samlede stemmetall
+      pluss alt uoverført overskudd er strengt lavere enn stemmetallet
+      til hver kandidat som blir stående.
+    */
+    let group = [];
+
+    for(let k = 1; k <= maximumUnder1532; k++){
+      const low = sorted.slice(0, k);
+      const rest = sorted.slice(k);
+
+      const lowTotal = low.reduce(
+        (sum, candidate) => sum + sc[candidate],
+        0
+      );
+
+      const possibleTotal = lowTotal + surplus;
+
+      const passes1531 =
+        rest.length &&
+        rest.every(candidate =>
+          possibleTotal < sc[candidate] - 1e-9
+        );
+
+      if(passes1531){
         group = low;
       }
     }
@@ -1015,23 +1067,68 @@ function electOneVara(
       sc[a] - sc[b] || a.localeCompare(b, "nb")
     );
 
-    let group = [];
+    /*
+      Ved varavalg skal kandidater som allerede er valgt i tidligere
+      valgoppgjør sees bort fra ved ekskludering, jf. punkt 20.
+
+      `eligibleCont` inneholder derfor bare kandidater som fortsatt kan
+      bli den aktuelle varaen. Minst én slik kandidat må bli stående.
+    */
+    const maxRemove = eligibleCont.length - 1;
 
     /*
-      Også i varavalget testes alle mulige lavgrupper.
+      Første trinn: punkt 15.3.2.
+      Finn det største antallet kandidater som høyst kan ekskluderes.
     */
-    for(let k = 1; k < sorted.length; k++){
+    let maximumUnder1532 = 0;
+
+    for(let k = 1; k <= maxRemove; k++){
       const low = sorted.slice(0, k);
       const rest = sorted.slice(k);
 
-      const threshold =
-        low.reduce((sum, c) => sum + sc[c], 0) +
-        untransferred;
+      const lowTotal = low.reduce(
+        (sum, candidate) => sum + sc[candidate],
+        0
+      );
 
-      if(
+      const maximumPossible = lowTotal + untransferred;
+
+      const passes1532 =
         rest.length &&
-        rest.every(c => threshold < sc[c] - 1e-9)
-      ){
+        rest.every(candidate =>
+          maximumPossible <= sc[candidate] + 1e-9
+        );
+
+      if(passes1532){
+        maximumUnder1532 = k;
+      }
+    }
+
+    /*
+      Andre trinn: punkt 15.3.1.
+      Finn den største gruppen innenfor maksimumsgruppen som kan
+      ekskluderes i denne runden.
+    */
+    let group = [];
+
+    for(let k = 1; k <= maximumUnder1532; k++){
+      const low = sorted.slice(0, k);
+      const rest = sorted.slice(k);
+
+      const lowTotal = low.reduce(
+        (sum, candidate) => sum + sc[candidate],
+        0
+      );
+
+      const possibleTotal = lowTotal + untransferred;
+
+      const passes1531 =
+        rest.length &&
+        rest.every(candidate =>
+          possibleTotal < sc[candidate] - 1e-9
+        );
+
+      if(passes1531){
         group = low;
       }
     }
