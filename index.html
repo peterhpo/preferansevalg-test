@@ -1,0 +1,1639 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Preferansevalg – valgkalkulator</title>
+
+<style>
+:root{
+  --bg:#f5f7fb;
+  --card:#fff;
+  --ink:#172033;
+  --muted:#657086;
+  --line:#dfe4ee;
+  --accent:#b3261e;
+  --ok:#16794b;
+  --warn:#9a6700;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+}
+
+header{
+  background:#111827;
+  color:#fff;
+  padding:22px 18px;
+}
+
+header h1{
+  margin:0;
+  font-size:24px;
+}
+
+header p{
+  margin:6px 0 0;
+  color:#d7dce5;
+}
+
+main{
+  max-width:1120px;
+  margin:22px auto;
+  padding:0 16px 50px;
+  display:grid;
+  grid-template-columns:1fr 1.25fr;
+  gap:18px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:18px;
+  box-shadow:0 2px 10px #00000008;
+}
+
+.full{grid-column:1/-1}
+
+h2{
+  margin:0 0 12px;
+  font-size:19px;
+}
+
+h3{
+  margin-top:20px;
+}
+
+label{
+  font-weight:650;
+  display:block;
+  margin:10px 0 6px;
+}
+
+input,textarea,button{
+  font:inherit;
+}
+
+input,textarea{
+  width:100%;
+  border:1px solid #cbd2df;
+  border-radius:9px;
+  padding:10px;
+  background:#fff;
+}
+
+textarea{
+  min-height:270px;
+  resize:vertical;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  align-items:end;
+}
+
+.row>*{flex:1}
+
+button{
+  border:0;
+  border-radius:9px;
+  padding:10px 14px;
+  cursor:pointer;
+  font-weight:700;
+  background:#e8ebf1;
+  color:#172033;
+}
+
+button.primary{
+  background:#111827;
+  color:white;
+}
+
+button.danger{
+  background:#feeceb;
+  color:#8c1d18;
+}
+
+.actions{
+  display:flex;
+  gap:9px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+
+.hint,.small{
+  color:var(--muted);
+  font-size:13px;
+}
+
+.pill{
+  display:inline-block;
+  padding:3px 8px;
+  border-radius:999px;
+  background:#edf2f7;
+  margin:2px 5px 2px 0;
+  font-size:13px;
+}
+
+.ok{
+  color:var(--ok);
+  font-weight:800;
+}
+
+.bad{
+  color:var(--accent);
+  font-weight:800;
+}
+
+.warn{
+  color:var(--warn);
+  font-weight:800;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  text-align:left;
+  padding:8px;
+  border-bottom:1px solid var(--line);
+}
+
+th{
+  font-size:13px;
+  color:var(--muted);
+}
+
+.round{
+  border-left:4px solid #c8ced9;
+  padding:8px 12px;
+  margin:12px 0;
+  background:#fafbfc;
+  border-radius:0 8px 8px 0;
+}
+
+.round h3{
+  margin:0 0 7px;
+  font-size:16px;
+}
+
+.event{
+  margin:4px 0;
+}
+
+details{
+  margin-top:10px;
+}
+
+summary{
+  cursor:pointer;
+  font-weight:700;
+}
+
+.error{
+  background:#fff0f0;
+  border:1px solid #f1b7b7;
+  padding:10px;
+  border-radius:8px;
+  color:#8c1d18;
+}
+
+@media(max-width:800px){
+  main{grid-template-columns:1fr}
+  .full{grid-column:auto}
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Preferansevalg – valgkalkulator</h1>
+  <p>Hver tellende, ikke-blank stemmeseddel starter med vekt 1,00.</p>
+</header>
+
+<main>
+
+<section class="card">
+  <h2>1. Oppsett</h2>
+
+  <div class="row">
+    <div>
+      <label for="seats">Antall faste plasser</label>
+      <input id="seats" type="number" min="1" value="3">
+    </div>
+
+    <div>
+      <label for="varas">Antall vararepresentanter</label>
+      <input id="varas" type="number" min="0" value="0">
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="seed">Loddtrekningsfrø</label>
+      <input id="seed" type="text" value="preferansevalg">
+    </div>
+    <div></div>
+  </div>
+
+  <label for="candidates">Kandidater – én per linje</label>
+
+  <textarea id="candidates" style="min-height:180px">
+random1
+random2
+random3
+  </textarea>
+
+  <p class="hint">
+    Loddtrekning ved nødvendig stemmelikhet gjøres deterministisk ut fra frøet.
+    Samme frø og samme stemmesedler gir samme resultat.
+  </p>
+</section>
+
+<section class="card">
+  <h2>2. Stemmesedler</h2>
+
+  <label for="ballots">
+    Én stemmeseddel per linje, fra høyest til lavest preferanse
+  </label>
+
+  <textarea id="ballots">random2 > random3 > random1
+random1 > random3 > random2
+random1
+random1 > random3
+random3 > random2
+random1
+random2
+random1 > random2
+random2 > random1 > random3
+random3 > random2 > random1
+random1 > random2
+random1 > random3 > random2
+random2
+random2
+random3 > random2
+random1 > random3
+random3
+random1 > random3 > random2
+random3 > random2 > random1
+random1 > random3
+random1
+random2 > random3
+random2
+random3
+random1
+random2
+random3 > random1
+random3 > random2
+random2
+random2 > random3
+random2 > random1 > random3
+random2 > random3
+random3 > random1 > random2
+random2 > random3
+random1
+random3 > random2 > random1
+random1 > random2 > random3
+random1 > random2 > random3
+random2 > random3
+random2
+random1 > random3
+random2
+random2 > random3
+random1 > random3 > random2
+random2 > random1
+random1
+random1 > random2 > random3
+random2 > random3
+random2 > random1 > random3
+random3 > random2</textarea>
+
+  <p class="hint">
+    Bruk <b>&gt;</b>, komma eller semikolon mellom navn.
+    Ukjente navn behandles som uskrevne og ignoreres på stemmeseddelen.
+  </p>
+
+  <div class="actions">
+    <button class="primary" id="run">Beregn valg</button>
+    <button id="demo">Lag tilfeldig demo</button>
+    <button id="exportReport">Eksporter valgbok</button>
+    <button id="exportBallots">Eksporter stemmesedler</button>
+    <button id="importBallotsButton">Importer stemmesedler</button>
+    <input id="importBallots" type="file" accept=".json,application/json" hidden>
+    <button class="danger" id="clear">Tøm stemmer</button>
+  </div>
+</section>
+
+<section class="card full">
+  <h2>3. Resultat</h2>
+  <div id="summary" class="hint">Trykk «Beregn valg».</div>
+  <div id="result"></div>
+</section>
+
+<section class="card full">
+  <h2>Om beregningen</h2>
+
+  <p class="small">
+    Kalkulatoren bruker valgtall, gruppevis ekskludering, overføring fra
+    ekskluderte kandidater etter seddelvekt og overføring av overskudd med
+    avkorting til to desimaler. Ved ekskludering undersøkes kandidatgrupper
+    før overskudd overføres. Vararepresentanter velges én etter én i separate
+    valgoppgjør.
+  </p>
+</section>
+
+</main>
+
+<script>
+"use strict";
+
+const $ = id => document.getElementById(id);
+
+let lastReport = "";
+
+function trunc2(x){
+  return Math.floor((x + 1e-10) * 100) / 100;
+}
+
+function fmt(x){
+  return (Math.round(x * 100) / 100)
+    .toFixed(2)
+    .replace(".", ",");
+}
+
+function esc(s){
+  return String(s).replace(/[&<>"]/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;"
+  }[c]));
+}
+
+function hashSeed(s){
+  let h = 2166136261 >>> 0;
+
+  for(const ch of s){
+    h ^= ch.charCodeAt(0);
+    h = Math.imul(h, 16777619);
+  }
+
+  return h >>> 0;
+}
+
+function rngFrom(s){
+  let a = hashSeed(s) || 1;
+
+  return () => {
+    a |= 0;
+    a = a + 0x6D2B79F5 | 0;
+
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+function choose(arr, rng){
+  return arr[Math.floor(rng() * arr.length)];
+}
+
+function parse(){
+  const candidates = $("candidates").value
+    .split(/\n/)
+    .map(x => x.trim())
+    .filter(Boolean);
+
+  const uniq = [...new Set(candidates)];
+
+  if(uniq.length !== candidates.length){
+    throw Error("Kandidatlisten inneholder duplikater.");
+  }
+
+  if(!uniq.length){
+    throw Error("Legg inn kandidater.");
+  }
+
+  const seats = +$("seats").value;
+
+  if(!Number.isInteger(seats) || seats < 1 || seats > uniq.length){
+    throw Error("Antall plasser må være mellom 1 og antall kandidater.");
+  }
+
+  const varas = +$("varas").value;
+
+  if(
+    !Number.isInteger(varas) ||
+    varas < 0 ||
+    varas > uniq.length - seats
+  ){
+    throw Error(
+      "Antall varaer må være mellom 0 og antall kandidater minus faste plasser."
+    );
+  }
+
+  const known = new Set(uniq);
+  const ballots = [];
+  const unlistedNames = [];
+  const blankBallots = [];
+
+  for(const [i, line0] of $("ballots").value.split(/\n/).entries()){
+    const line = line0.trim();
+
+    if(!line){
+      continue;
+    }
+
+    const originalPrefs = line
+      .split(/\s*(?:>|,|;)\s*/)
+      .map(x => x.trim())
+      .filter(Boolean);
+
+    const knownPrefs = originalPrefs.filter(x => known.has(x));
+    const unknownPrefs = originalPrefs.filter(x => !known.has(x));
+
+    if(new Set(knownPrefs).size !== knownPrefs.length){
+      throw Error(
+        `Stemmeseddel ${i + 1}: samme kandidat er rangert flere ganger.`
+      );
+    }
+
+    if(unknownPrefs.length){
+      unlistedNames.push({
+        ballot: i + 1,
+        names: unknownPrefs
+      });
+    }
+
+    if(!knownPrefs.length){
+      blankBallots.push(i + 1);
+      continue;
+    }
+
+    ballots.push({
+      id: ballots.length + 1,
+      prefs: knownPrefs,
+      weight: 1,
+      holder: null,
+      arrival: 0
+    });
+  }
+
+  if(!ballots.length){
+    throw Error("Ingen tellende stemmesedler.");
+  }
+
+  return {
+    candidates: uniq,
+    seats,
+    varas,
+    ballots,
+    unlistedNames,
+    blankBallots
+  };
+}
+
+function election(candidates, seats, ballots, seed){
+  const rng = rngFrom(seed);
+
+  const status = Object.fromEntries(
+    candidates.map(c => [c, "continuing"])
+  );
+
+  const elected = [];
+  const logs = [];
+
+  const quota = ballots.length / (seats + 1) + 0.01;
+
+  const surplusDone = new Set();
+  const electedArrival = {};
+
+  let round = 1;
+  let arrivalCounter = 1;
+  let guard = 0;
+
+  const continuing = () =>
+    candidates.filter(c => status[c] === "continuing");
+
+  const score = () => {
+    const z = Object.fromEntries(candidates.map(c => [c, 0]));
+
+    for(const b of ballots){
+      if(b.holder){
+        z[b.holder] += b.weight;
+      }
+    }
+
+    return z;
+  };
+
+  const nextPref = ballot =>
+    ballot.prefs.find(c => status[c] === "continuing") || null;
+
+  const snapshot = title => {
+    logs.push({
+      round,
+      type:"snapshot",
+      title,
+      scores:score(),
+      continuing:continuing().slice(),
+      elected:elected.slice()
+    });
+  };
+
+  const electNew = reason => {
+    const sc = score();
+
+    const news = continuing().filter(
+      c => sc[c] + 1e-9 >= quota
+    );
+
+    for(const c of news){
+      status[c] = "elected";
+      elected.push(c);
+      electedArrival[c] = arrivalCounter;
+    }
+
+    if(news.length){
+      logs.push({
+        round,
+        type:"elected",
+        text:
+          `Valgt: ${news.map(c => `${c} (${fmt(sc[c])})`).join(", ")}` +
+          (reason ? ` – ${reason}` : "")
+      });
+    }
+
+    return news;
+  };
+
+  const totalUntransferredSurplus = () => {
+    const sc = score();
+
+    return elected
+      .filter(c => !surplusDone.has(c))
+      .reduce((sum, c) => {
+        return sum + Math.max(0, sc[c] - quota);
+      }, 0);
+  };
+
+  for(const ballot of ballots){
+    ballot.holder = nextPref(ballot);
+    ballot.arrival = 1;
+  }
+
+  snapshot("Første opptelling");
+  electNew("oppnådde valgtallet i første opptelling");
+
+  while(elected.length < seats && guard++ < 10000){
+    round++;
+
+    const cont = continuing();
+
+    if(cont.length <= seats - elected.length){
+      const sc = score();
+
+      for(const c of cont){
+        status[c] = "elected";
+        elected.push(c);
+      }
+
+      logs.push({
+        round,
+        type:"finish",
+        text:
+          `Antall gjenstående kandidater (${cont.length}) er lik eller ` +
+          `lavere enn antall ledige plasser. Valgt: ${cont.join(", ")}.`,
+        scores:sc
+      });
+
+      break;
+    }
+
+    const sc = score();
+    const surplus = totalUntransferredSurplus();
+
+    const sorted = cont.slice().sort((a, b) =>
+      sc[a] - sc[b] || a.localeCompare(b, "nb")
+    );
+
+    const maxRemove = cont.length - (seats - elected.length);
+
+    let group = [];
+
+    /*
+      Viktig: Det må testes videre selv om en mindre gruppe ikke kan
+      ekskluderes. Tre kandidater på 0,00 kan eksempelvis ekskluderes
+      samlet selv om én eller to av dem ikke kan ekskluderes alene.
+    */
+    for(let k = 1; k <= maxRemove; k++){
+      const low = sorted.slice(0, k);
+      const rest = sorted.slice(k);
+
+      const sumLow = low.reduce((sum, c) => sum + sc[c], 0);
+      const threshold = sumLow + surplus;
+
+      const ok =
+        rest.length &&
+        rest.every(c => threshold < sc[c] - 1e-9);
+
+      if(ok){
+        group = low;
+      }
+    }
+
+    if(group.length){
+      for(const c of group){
+        status[c] = "excluded";
+      }
+
+      logs.push({
+        round,
+        type:"exclude",
+        text:
+          `Ekskludert etter lavgruppe-regelen: ` +
+          `${group.map(c => `${c} (${fmt(sc[c])})`).join(", ")}. ` +
+          `Uoverført overskudd: ${fmt(surplus)}.`
+      });
+
+      const moved = ballots.filter(b => group.includes(b.holder));
+
+      const weights = [...new Set(
+        moved.map(b => b.weight.toFixed(10))
+      )]
+        .map(Number)
+        .sort((a, b) => b - a);
+
+      for(const weight of weights){
+        arrivalCounter++;
+
+        const batch = moved.filter(
+          b => Math.abs(b.weight - weight) < 1e-9
+        );
+
+        for(const ballot of batch){
+          ballot.holder = nextPref(ballot);
+          ballot.arrival = arrivalCounter;
+        }
+
+        logs.push({
+          round,
+          type:"transfer",
+          text:
+            `Overførte ${batch.length} sedler med vekt ${fmt(weight)} ` +
+            `fra ekskluderte kandidater.`
+        });
+
+        electNew("etter overføring fra ekskludert kandidat");
+
+        if(elected.length >= seats){
+          break;
+        }
+      }
+
+      snapshot("Etter ekskludering og overføring");
+      continue;
+    }
+
+    const sc2 = score();
+
+    const surplusCandidates = elected.filter(c =>
+      !surplusDone.has(c) &&
+      sc2[c] - quota > 1e-9
+    );
+
+    if(surplusCandidates.length){
+      const max = Math.max(
+        ...surplusCandidates.map(c => sc2[c] - quota)
+      );
+
+      const tied = surplusCandidates.filter(
+        c => Math.abs((sc2[c] - quota) - max) < 1e-9
+      );
+
+      const candidate =
+        tied.length === 1 ? tied[0] : choose(tied, rng);
+
+      if(tied.length > 1){
+        logs.push({
+          round,
+          type:"lot",
+          text:
+            `Loddtrekning mellom like store overskudd: ` +
+            `${tied.join(", ")} → ${candidate}.`
+        });
+      }
+
+      const surplusValue = sc2[candidate] - quota;
+
+      const source = ballots.filter(
+        b =>
+          b.holder === candidate &&
+          b.arrival === electedArrival[candidate]
+      );
+
+      const transferable = source.filter(
+        b => b.prefs.some(c => status[c] === "continuing")
+      );
+
+      const sumWeights = transferable.reduce(
+        (sum, b) => sum + b.weight,
+        0
+      );
+
+      let newWeight = null;
+
+      if(
+        transferable.length &&
+        sumWeights > surplusValue + 1e-9
+      ){
+        newWeight = trunc2(surplusValue / transferable.length);
+      }
+
+      arrivalCounter++;
+
+      for(const ballot of transferable){
+        if(newWeight !== null){
+          ballot.weight = newWeight;
+        }
+
+        ballot.holder = nextPref(ballot);
+        ballot.arrival = arrivalCounter;
+      }
+
+      surplusDone.add(candidate);
+
+      logs.push({
+        round,
+        type:"surplus",
+        text:
+          `Overførte overskudd fra ${candidate}: ` +
+          `overskudd ${fmt(surplusValue)}, ` +
+          `${transferable.length} overførbare sedler` +
+          (
+            newWeight !== null
+              ? `, ny vekt ${fmt(newWeight)}.`
+              : ", uendret vekt."
+          )
+      });
+
+      electNew(`etter overskudd fra ${candidate}`);
+      snapshot("Etter overskuddsoverføring");
+
+      continue;
+    }
+
+    const min = Math.min(...cont.map(c => sc[c]));
+
+    const tied = cont.filter(
+      c => Math.abs(sc[c] - min) < 1e-9
+    );
+
+    const loser =
+      tied.length === 1 ? tied[0] : choose(tied, rng);
+
+    if(tied.length > 1){
+      logs.push({
+        round,
+        type:"lot",
+        text:
+          `Loddtrekning mellom laveste kandidater ${tied.join(", ")} ` +
+          `→ ${loser} ekskluderes.`
+      });
+    }
+
+    status[loser] = "excluded";
+
+    logs.push({
+      round,
+      type:"exclude",
+      text:`Ekskludert: ${loser} (${fmt(sc[loser])}).`
+    });
+
+    const moved = ballots.filter(b => b.holder === loser);
+
+    const weights = [...new Set(
+      moved.map(b => b.weight.toFixed(10))
+    )]
+      .map(Number)
+      .sort((a, b) => b - a);
+
+    for(const weight of weights){
+      arrivalCounter++;
+
+      const batch = moved.filter(
+        b => Math.abs(b.weight - weight) < 1e-9
+      );
+
+      for(const ballot of batch){
+        ballot.holder = nextPref(ballot);
+        ballot.arrival = arrivalCounter;
+      }
+
+      logs.push({
+        round,
+        type:"transfer",
+        text:
+          `Overførte ${batch.length} sedler med vekt ${fmt(weight)} ` +
+          `fra ${loser}.`
+      });
+
+      electNew(`etter overføring fra ${loser}`);
+
+      if(elected.length >= seats){
+        break;
+      }
+    }
+
+    snapshot("Etter ekskludering og overføring");
+  }
+
+  return {
+    quota,
+    elected,
+    status,
+    logs,
+    finalScores:score()
+  };
+}
+
+function electOneVara(
+  candidates,
+  fixedSeats,
+  varaNo,
+  originalBallots,
+  protectedNames,
+  seed
+){
+  const seatsForQuota = fixedSeats + varaNo;
+  const quota = originalBallots.length / (seatsForQuota + 1) + 0.01;
+
+  const ballots = originalBallots.map(b => ({
+    id:b.id,
+    prefs:[...b.prefs],
+    weight:1,
+    holder:null,
+    arrival:0
+  }));
+
+  const rng = rngFrom(seed + "-vara-" + varaNo);
+
+  const status = Object.fromEntries(
+    candidates.map(c => [c, "continuing"])
+  );
+
+  const protectedSet = new Set(protectedNames);
+  const elected = [];
+  const surplusDone = new Set();
+  const electedArrival = {};
+  const logs = [];
+
+  let arrivalCounter = 1;
+  let guard = 0;
+
+  const continuing = () =>
+    candidates.filter(c => status[c] === "continuing");
+
+  const score = () => {
+    const z = Object.fromEntries(candidates.map(c => [c, 0]));
+
+    for(const b of ballots){
+      if(b.holder){
+        z[b.holder] += b.weight;
+      }
+    }
+
+    return z;
+  };
+
+  const nextPref = ballot =>
+    ballot.prefs.find(c => status[c] === "continuing") || null;
+
+  for(const ballot of ballots){
+    ballot.holder = nextPref(ballot);
+    ballot.arrival = 1;
+  }
+
+  const declare = reason => {
+    const sc = score();
+
+    const news = continuing().filter(
+      c => sc[c] + 1e-9 >= quota
+    );
+
+    for(const c of news){
+      status[c] = "elected";
+      elected.push(c);
+      electedArrival[c] = arrivalCounter;
+    }
+
+    if(news.length){
+      logs.push(
+        `Valgtall nådd: ${news.map(c =>
+          `${c} (${fmt(sc[c])})`
+        ).join(", ")}${reason ? ` – ${reason}` : ""}`
+      );
+    }
+
+    const fresh = news.filter(c => !protectedSet.has(c));
+
+    if(!fresh.length){
+      return null;
+    }
+
+    const highest = Math.max(...fresh.map(c => sc[c]));
+
+    const tied = fresh.filter(
+      c => Math.abs(sc[c] - highest) < 1e-9
+    );
+
+    const winner =
+      tied.length === 1 ? tied[0] : choose(tied, rng);
+
+    if(tied.length > 1){
+      logs.push(
+        `Likhet mellom nye valgte ${tied.join(", ")}; ` +
+        `loddtrekning → ${winner}.`
+      );
+    }
+
+    return winner;
+  };
+
+  let winner = declare("første opptelling");
+
+  if(winner){
+    return {winner, quota, logs};
+  }
+
+  while(guard++ < 10000){
+    const cont = continuing();
+    const sc = score();
+
+    const eligibleCont = cont.filter(
+      c => !protectedSet.has(c)
+    );
+
+    if(eligibleCont.length === 1){
+      logs.push(
+        `Bare én ikke-tidligere-valgt kandidat gjenstår: ` +
+        `${eligibleCont[0]}.`
+      );
+
+      return {
+        winner:eligibleCont[0],
+        quota,
+        logs
+      };
+    }
+
+    if(!eligibleCont.length){
+      break;
+    }
+
+    const untransferred = elected
+      .filter(c => !surplusDone.has(c))
+      .reduce(
+        (sum, c) => sum + Math.max(0, sc[c] - quota),
+        0
+      );
+
+    const sorted = eligibleCont.slice().sort((a, b) =>
+      sc[a] - sc[b] || a.localeCompare(b, "nb")
+    );
+
+    let group = [];
+
+    /*
+      Også i varavalget testes alle mulige lavgrupper.
+    */
+    for(let k = 1; k < sorted.length; k++){
+      const low = sorted.slice(0, k);
+      const rest = sorted.slice(k);
+
+      const threshold =
+        low.reduce((sum, c) => sum + sc[c], 0) +
+        untransferred;
+
+      if(
+        rest.length &&
+        rest.every(c => threshold < sc[c] - 1e-9)
+      ){
+        group = low;
+      }
+    }
+
+    if(group.length){
+      for(const c of group){
+        status[c] = "excluded";
+      }
+
+      logs.push(
+        `Ekskludert: ${group.map(c =>
+          `${c} (${fmt(sc[c])})`
+        ).join(", ")}.`
+      );
+
+      const moved = ballots.filter(
+        b => group.includes(b.holder)
+      );
+
+      const weights = [...new Set(
+        moved.map(b => b.weight.toFixed(10))
+      )]
+        .map(Number)
+        .sort((a, b) => b - a);
+
+      for(const weight of weights){
+        arrivalCounter++;
+
+        const batch = moved.filter(
+          b => Math.abs(b.weight - weight) < 1e-9
+        );
+
+        for(const ballot of batch){
+          ballot.holder = nextPref(ballot);
+          ballot.arrival = arrivalCounter;
+        }
+
+        logs.push(
+          `Overførte ${batch.length} sedler med vekt ${fmt(weight)}.`
+        );
+
+        winner = declare("etter ekskludering");
+
+        if(winner){
+          return {winner, quota, logs};
+        }
+      }
+
+      continue;
+    }
+
+    const sc2 = score();
+
+    const surplusCandidates = elected.filter(
+      c =>
+        !surplusDone.has(c) &&
+        sc2[c] - quota > 1e-9
+    );
+
+    if(surplusCandidates.length){
+      const maximum = Math.max(
+        ...surplusCandidates.map(c => sc2[c] - quota)
+      );
+
+      const tied = surplusCandidates.filter(
+        c => Math.abs((sc2[c] - quota) - maximum) < 1e-9
+      );
+
+      const candidate =
+        tied.length === 1 ? tied[0] : choose(tied, rng);
+
+      const surplusValue = sc2[candidate] - quota;
+
+      const source = ballots.filter(
+        b =>
+          b.holder === candidate &&
+          b.arrival === electedArrival[candidate]
+      );
+
+      const transferable = source.filter(
+        b => b.prefs.some(c => status[c] === "continuing")
+      );
+
+      const sumWeights = transferable.reduce(
+        (sum, b) => sum + b.weight,
+        0
+      );
+
+      let newWeight = null;
+
+      if(
+        transferable.length &&
+        sumWeights > surplusValue + 1e-9
+      ){
+        newWeight = trunc2(
+          surplusValue / transferable.length
+        );
+      }
+
+      arrivalCounter++;
+
+      for(const ballot of transferable){
+        if(newWeight !== null){
+          ballot.weight = newWeight;
+        }
+
+        ballot.holder = nextPref(ballot);
+        ballot.arrival = arrivalCounter;
+      }
+
+      surplusDone.add(candidate);
+
+      logs.push(
+        `Overskudd fra ${candidate}: ${fmt(surplusValue)}; ` +
+        `${transferable.length} sedler` +
+        (
+          newWeight !== null
+            ? `, ny vekt ${fmt(newWeight)}.`
+            : "."
+        )
+      );
+
+      winner = declare(`etter overskudd fra ${candidate}`);
+
+      if(winner){
+        return {winner, quota, logs};
+      }
+
+      continue;
+    }
+
+    const min = Math.min(...eligibleCont.map(c => sc[c]));
+
+    const tied = eligibleCont.filter(
+      c => Math.abs(sc[c] - min) < 1e-9
+    );
+
+    const loser =
+      tied.length === 1 ? tied[0] : choose(tied, rng);
+
+    status[loser] = "excluded";
+
+    logs.push(
+      `Ekskludert laveste: ${loser} (${fmt(sc[loser])})` +
+      (tied.length > 1 ? " etter loddtrekning." : ".")
+    );
+
+    const moved = ballots.filter(b => b.holder === loser);
+
+    const weights = [...new Set(
+      moved.map(b => b.weight.toFixed(10))
+    )]
+      .map(Number)
+      .sort((a, b) => b - a);
+
+    for(const weight of weights){
+      arrivalCounter++;
+
+      const batch = moved.filter(
+        b => Math.abs(b.weight - weight) < 1e-9
+      );
+
+      for(const ballot of batch){
+        ballot.holder = nextPref(ballot);
+        ballot.arrival = arrivalCounter;
+      }
+
+      winner = declare(`etter overføring fra ${loser}`);
+
+      if(winner){
+        return {winner, quota, logs};
+      }
+    }
+  }
+
+  return {
+    winner:null,
+    quota,
+    logs
+  };
+}
+
+function calculateVaras(data, fixed){
+  const chosen = [...fixed];
+  const results = [];
+
+  for(let i = 1; i <= data.varas; i++){
+    const result = electOneVara(
+      data.candidates,
+      data.seats,
+      i,
+      data.ballots,
+      chosen,
+      $("seed").value
+    );
+
+    if(!result.winner){
+      break;
+    }
+
+    results.push(result);
+    chosen.push(result.winner);
+  }
+
+  return results;
+}
+
+function buildTextReport(data, calc){
+  let text =
+    "PREFERANSEVALG – VALGBOK\n\n" +
+    `Tellende stemmer: ${data.ballots.length}\n` +
+    `Blanke/uten kandidatpreferanse: ${data.blankBallots.length}\n` +
+    `Faste plasser: ${data.seats}\n` +
+    `Vararepresentanter: ${data.varas}\n` +
+    `Valgtall faste: ${fmt(calc.quota)}\n` +
+    `Loddtrekningsfrø: ${$("seed").value}\n`;
+
+  if(data.unlistedNames.length){
+    text += "\nSEDLER MED USKREVNE NAVN\n";
+
+    for(const entry of data.unlistedNames){
+      text +=
+        `Seddel ${entry.ballot}: ${entry.names.join(", ")}\n`;
+    }
+  }
+
+  text += "\nVALGTE FASTE REPRESENTANTER\n";
+
+  calc.elected.slice(0, data.seats).forEach((c, i) => {
+    text += `${i + 1}. ${c}\n`;
+  });
+
+  if(calc.varaResults?.length){
+    text += "\nVARAREPRESENTANTER\n";
+
+    calc.varaResults.forEach((result, i) => {
+      text +=
+        `${i + 1}. vara: ${result.winner} ` +
+        `(valgtall ${fmt(result.quota)})\n`;
+
+      for(const line of result.logs){
+        text += `  ${line}\n`;
+      }
+    });
+  }
+
+  let currentRound = 0;
+
+  for(const log of calc.logs){
+    if(log.round !== currentRound){
+      currentRound = log.round;
+
+      text +=
+        `\nRUNDE ${currentRound}\n` +
+        `${"-".repeat(30)}\n`;
+    }
+
+    if(log.text){
+      text += `${log.text}\n`;
+    }
+
+    if(log.type === "snapshot"){
+      text += `${log.title}\n`;
+
+      for(const candidate of data.candidates){
+        text +=
+          `  ${candidate}: ${fmt(log.scores[candidate] || 0)}\n`;
+      }
+    }
+  }
+
+  return text;
+}
+
+function render(data, calc){
+  const varaResults = calculateVaras(
+    data,
+    calc.elected.slice(0, data.seats)
+  );
+
+  calc.varaResults = varaResults;
+
+  const unlistedInfo = data.unlistedNames.length
+    ? `<span class="pill warn">${data.unlistedNames.length} seddel(er) med uskrevne navn</span>`
+    : "";
+
+  const blankInfo = data.blankBallots.length
+    ? `<span class="pill warn">${data.blankBallots.length} blank(e) eller uten gyldig kandidatpreferanse</span>`
+    : "";
+
+  $("summary").innerHTML =
+    `<span class="pill">${data.ballots.length} tellende stemmer</span>` +
+    `<span class="pill">${data.seats} faste</span>` +
+    `<span class="pill">${data.varas} vara</span>` +
+    `<span class="pill">Valgtall faste ${fmt(calc.quota)}</span>` +
+    `<span class="pill">Alle startvekter 1,00</span>` +
+    unlistedInfo +
+    blankInfo;
+
+  let out =
+    "<h3>Valgte faste representanter</h3>" +
+    "<ol>" +
+    calc.elected
+      .slice(0, data.seats)
+      .map(c => `<li><b>${esc(c)}</b></li>`)
+      .join("") +
+    "</ol>";
+
+  if(varaResults.length){
+    out +=
+      "<h3>Vararepresentanter i prioritert rekkefølge</h3>" +
+      "<ol>" +
+      varaResults.map((result, i) =>
+        `<li><b>${esc(result.winner)}</b> ` +
+        `<span class="small">(valgtall ${fmt(result.quota)})</span></li>`
+      ).join("") +
+      "</ol>";
+
+    out +=
+      "<details>" +
+      "<summary>Valgbok for varaoppgjørene</summary>" +
+      varaResults.map((result, i) =>
+        `<div class="round">` +
+        `<h3>${i + 1}. vara – ${esc(result.winner)}</h3>` +
+        result.logs
+          .map(line => `<div class="event">${esc(line)}</div>`)
+          .join("") +
+        "</div>"
+      ).join("") +
+      "</details>";
+  }
+
+  out +=
+    "<details open>" +
+    "<summary>Valgbok – faste representanter, runde for runde</summary>";
+
+  let currentRound = 0;
+
+  for(const log of calc.logs){
+    if(log.round !== currentRound){
+      if(currentRound){
+        out += "</div>";
+      }
+
+      currentRound = log.round;
+
+      out +=
+        `<div class="round">` +
+        `<h3>Runde ${currentRound}</h3>`;
+    }
+
+    if(log.type === "snapshot"){
+      out +=
+        `<div class="event"><b>${esc(log.title)}</b></div>` +
+        "<table>" +
+        "<tr>" +
+        "<th>Kandidat</th>" +
+        "<th>Stemmetall</th>" +
+        "<th>Status</th>" +
+        "</tr>";
+
+      for(const candidate of data.candidates){
+        const tag = log.elected.includes(candidate)
+          ? "Valgt"
+          : log.continuing.includes(candidate)
+            ? "Gjenstående"
+            : "Ekskludert";
+
+        out +=
+          "<tr>" +
+          `<td>${esc(candidate)}</td>` +
+          `<td>${fmt(log.scores[candidate] || 0)}</td>` +
+          `<td>${tag}</td>` +
+          "</tr>";
+      }
+
+      out += "</table>";
+    }else{
+      out += `<div class="event">${esc(log.text || "")}</div>`;
+    }
+  }
+
+  if(currentRound){
+    out += "</div>";
+  }
+
+  out += "</details>";
+
+  $("result").innerHTML = out;
+
+  lastReport = buildTextReport(data, calc);
+}
+
+function downloadFile(filename, content, mimeType){
+  const blob = new Blob(
+    [content],
+    {type:`${mimeType};charset=utf-8`}
+  );
+
+  const link = document.createElement("a");
+
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  URL.revokeObjectURL(link.href);
+}
+
+function exportBallots(){
+  const payload = {
+    format:"preferansevalg-stemmesedler",
+    version:1,
+    exportedAt:new Date().toISOString(),
+
+    seats:+$("seats").value,
+    varas:+$("varas").value,
+    seed:$("seed").value,
+
+    candidates:$("candidates").value
+      .split(/\n/)
+      .map(x => x.trim())
+      .filter(Boolean),
+
+    ballots:$("ballots").value
+      .split(/\n/)
+      .map(x => x.trim())
+      .filter(Boolean)
+  };
+
+  downloadFile(
+    "stemmesedler-preferansevalg.json",
+    JSON.stringify(payload, null, 2),
+    "application/json"
+  );
+}
+
+function importBallotsFromFile(file){
+  const reader = new FileReader();
+
+  reader.onload = event => {
+    try{
+      const imported = JSON.parse(event.target.result);
+
+      if(
+        !imported ||
+        typeof imported !== "object" ||
+        !Array.isArray(imported.candidates) ||
+        !Array.isArray(imported.ballots)
+      ){
+        throw Error(
+          "Filen har ikke riktig format for import av stemmesedler."
+        );
+      }
+
+      if(
+        imported.format &&
+        imported.format !== "preferansevalg-stemmesedler"
+      ){
+        throw Error(
+          "Filen er ikke en gyldig eksportfil fra denne valgkalkulatoren."
+        );
+      }
+
+      $("candidates").value = imported.candidates
+        .map(x => String(x).trim())
+        .filter(Boolean)
+        .join("\n");
+
+      $("ballots").value = imported.ballots
+        .map(x => String(x).trim())
+        .filter(Boolean)
+        .join("\n");
+
+      if(Number.isInteger(imported.seats) && imported.seats > 0){
+        $("seats").value = imported.seats;
+      }
+
+      if(Number.isInteger(imported.varas) && imported.varas >= 0){
+        $("varas").value = imported.varas;
+      }
+
+      if(typeof imported.seed === "string"){
+        $("seed").value = imported.seed;
+      }
+
+      $("result").innerHTML = "";
+
+      $("summary").innerHTML =
+        `<span class="ok">Stemmesedler og oppsett er importert. ` +
+        `Trykk «Beregn valg» for å kjøre opptellingen.</span>`;
+
+    }catch(error){
+      $("result").innerHTML = "";
+      $("summary").innerHTML =
+        `<div class="error">${esc(error.message)}</div>`;
+    }
+  };
+
+  reader.onerror = () => {
+    $("summary").innerHTML =
+      `<div class="error">Kunne ikke lese importfilen.</div>`;
+  };
+
+  reader.readAsText(file, "utf-8");
+}
+
+$("run").onclick = () => {
+  try{
+    const data = parse();
+
+    const calculation = election(
+      data.candidates,
+      data.seats,
+      data.ballots,
+      $("seed").value
+    );
+
+    render(data, calculation);
+  }catch(error){
+    $("summary").innerHTML =
+      `<div class="error">${esc(error.message)}</div>`;
+
+    $("result").innerHTML = "";
+  }
+};
+
+$("clear").onclick = () => {
+  $("ballots").value = "";
+  $("result").innerHTML = "";
+  $("summary").textContent = "Stemmer tømt.";
+};
+
+$("demo").onclick = () => {
+  const candidates = $("candidates").value
+    .split(/\n/)
+    .map(x => x.trim())
+    .filter(Boolean);
+
+  if(candidates.length < 2){
+    return;
+  }
+
+  const rng = rngFrom($("seed").value + "-demo");
+  const lines = [];
+
+  for(let i = 0; i < 50; i++){
+    const shuffled = candidates.slice();
+
+    for(let j = shuffled.length - 1; j > 0; j--){
+      const k = Math.floor(rng() * (j + 1));
+
+      [shuffled[j], shuffled[k]] =
+        [shuffled[k], shuffled[j]];
+    }
+
+    const numberOfPreferences =
+      1 + Math.floor(rng() * shuffled.length);
+
+    lines.push(
+      shuffled
+        .slice(0, numberOfPreferences)
+        .join(" > ")
+    );
+  }
+
+  $("ballots").value = lines.join("\n");
+};
+
+$("exportReport").onclick = () => {
+  if(!lastReport){
+    alert("Beregn valget først.");
+    return;
+  }
+
+  downloadFile(
+    "valgbok-preferansevalg.txt",
+    lastReport,
+    "text/plain"
+  );
+};
+
+$("exportBallots").onclick = () => {
+  exportBallots();
+};
+
+$("importBallotsButton").onclick = () => {
+  $("importBallots").click();
+};
+
+$("importBallots").onchange = event => {
+  const file = event.target.files?.[0];
+
+  if(file){
+    importBallotsFromFile(file);
+  }
+
+  event.target.value = "";
+};
+</script>
+
+</body>
+</html>
